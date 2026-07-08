@@ -1,9 +1,16 @@
-import data_loader as dl
+from src import data_loader as dl
 import pandas as pd
 import numpy as np
 
 
 def preprocess_market_data(raw_df): 
+    """
+    Prepare raw market data for modelling.
+
+    - Keep only closing prices
+    - Compute daily log returns
+    - Remove rows with missing values
+    """
     market_df = raw_df[['Close']].copy()
     market_df['Return']  = np.log(market_df['Close'] / market_df['Close'].shift())
     market_df = market_df.dropna()
