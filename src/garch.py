@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import pandas as pd
-import numpy as np
 from arch import arch_model
 from arch.univariate.base import ARCHModelResult
 
