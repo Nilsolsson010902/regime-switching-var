@@ -69,9 +69,16 @@ class HiddenMarkovModel:
         """
         d = len(observation) 
         dim_const = d * np.log(np.pi * 2)
-        log_determinant = np.log(np.linalg.det(self.covariances[state]))
-        mahalanobis = np.subtract(observation, self.means[state]).T @ np.linalg.inv(self.covariances[state]) @ np.subtract(observation, self.means[state])
-        return -1/2*(dim_const + log_determinant+ mahalanobis)
+        if self.covariance_type == "full":
+            
+            log_determinant = np.log(np.linalg.det(self.covariances[state]))
+            mahalanobis = np.subtract(observation, self.means[state]).T @ np.linalg.inv(self.covariances[state]) @ np.subtract(observation, self.means[state])
+            
+        else: 
+            log_determinant = np.sum(np.log(self.covariances[state]))
+            mahalanobis = np.sum(np.subtract(observation, self.means[state])**2 /self.covariances[state] )
+        
+        return -0.5*(dim_const + log_determinant+ mahalanobis)
 
 
     def compute_emission_probability_matrix(self) -> np.ndarray:
