@@ -2,6 +2,11 @@ import numpy as np
 from src.markov_model.forward import forward_filtering
 
 def test_forward_filtering():
+    """
+    
+    Test the forward filtering algorithm with a simple example.
+
+    """
     initial_probabilities = np.array([0.5, 0.5])
 
     transition_matrix = np.array([
@@ -16,13 +21,7 @@ def test_forward_filtering():
     ])
 
     log_emissions = np.log(emission_matrix)
-
-    log_alpha = forward_filtering(
-        initial_probabilities,
-        transition_matrix,
-        log_emissions
-    )
-
+    log_alpha = forward_filtering(initial_probabilities, transition_matrix, log_emissions)
     alpha = np.exp(log_alpha)
 
     expected = np.array([
