@@ -21,6 +21,9 @@ class HiddenMarkovModel:
         This method sets the initial state probabilities, transition matrix, means, and covariance matrices
         based on the provided feature matrix and the number of states.
         """
+        if self.states <= 1:
+                    raise ValueError("States must be an integer larger than 1")
+                
         if self.covariance_type not in ["full", "diag"]:
             raise ValueError("Covariance type must be either 'full' or 'diag'.")
         

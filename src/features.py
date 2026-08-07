@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from garch import GarchOutput
 
 
@@ -19,10 +18,7 @@ def compute_log_returns(prices: pd.Series) -> pd.Series:
     return log_returns
 
 
-def compute_momentum(
-    prices: pd.Series,
-    window: int = 20
-) -> pd.Series:
+def compute_momentum(prices: pd.Series, window: int = 20) -> pd.Series:
     """
     Compute log momentum over a specified window.
 
@@ -49,10 +45,7 @@ def compute_momentum(
     return momentum
 
 
-def compute_rolling_volatility(
-    returns: pd.Series,
-    window: int = 20
-) -> pd.Series:
+def compute_rolling_volatility(returns: pd.Series, window: int = 20) -> pd.Series:
     """
     Compute rolling standard deviation of a return series.
 
@@ -99,11 +92,7 @@ def validate_feature_input(feature_series: pd.Series) -> None:
         raise ValueError("Input Series index contains duplicate values.")
 
 
-def build_hmm_features(
-    ticker: pd.DataFrame,
-    garch: GarchOutput,
-    window: int = 20
-) -> pd.DataFrame:
+def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput, window: int = 20) -> pd.DataFrame:
     """
     Build a modelling-ready feature DataFrame for HMM analysis.
 
@@ -125,9 +114,7 @@ def build_hmm_features(
 
     # GARCH was fitted using returns in percentage units.
     # Divide by 100 to align volatility with decimal-form returns.
-    conditional_volatility = (
-        garch.conditional_volatility / 100
-    ).rename("Conditional_Volatility")
+    conditional_volatility = (garch.conditional_volatility / 100).rename("Conditional_Volatility")
 
     hmm_features = pd.concat(
         [
@@ -138,11 +125,5 @@ def build_hmm_features(
         axis=1
     )
 
-    hmm_features = (
-        hmm_features
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-        .sort_index()
-    )
-
+    hmm_features = (hmm_features.replace([np.inf, -np.inf], np.nan).dropna().sort_index())
     return hmm_features
