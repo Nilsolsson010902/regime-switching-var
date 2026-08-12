@@ -49,7 +49,7 @@ def baum_welch_step(
     log_trans = np.log(transition_matrix)
     log_obs = np.log(feature_matrix)
 
-    log_alpha = forward_filtering(initial_probabilities=initial_probabilities, transition_matrix=transition_matrix, log_emission_matrix=log_emission_matrix)
+    log_alpha = forward_filtering(initial_probabilities=initial_probabilities, transition_matrix=transition_matrix, log_emission_matrix=log_emission_matrix).log_alpha
     log_beta = backward_filtering(transition_matrix=transition_matrix, log_emission_matrix=log_emission_matrix)
     log_gamma = log_alpha + log_beta
     log_gamma -= logsumexp(log_gamma, axis=1, keepdims=True)

@@ -22,17 +22,15 @@ def log_emission_matrix():
         [0.10, 0.90]
     ]))
 
-def test_forward_filtering(initial_probability, transition_matrix, log_emission_matrix):
+@pytest.fixture
+def log_alpha():
+    return forward_filtering(initial_probability, transition_matrix, log_emission_matrix).log_alpha
+
+def test_forward_filtering(log_alpha):
     """
-    
     Test the forward filtering algorithm with a simple example.
-
     """
-
-
-    log_alpha = forward_filtering(initial_probability, transition_matrix, log_emission_matrix)
     alpha = np.exp(log_alpha)
-
     expected = np.array([
         [0.9000, 0.1000],
         [0.6364, 0.3636],
@@ -41,16 +39,10 @@ def test_forward_filtering(initial_probability, transition_matrix, log_emission_
 
     assert np.allclose(alpha, expected, atol=1e-3)
 
-def test_forward_probabilities_sum_to_one(initial_probability, transition_matrix, log_emission_matrix):
+def test_forward_probabilities_sum_to_one(log_alpha):
     """
     Test that the forward probabilities sum to 1 at each time step.
     """
-
-    log_alpha = forward_filtering(
-        initial_probability,
-        transition_matrix,
-        log_emission_matrix
-    )
 
     alpha = np.exp(log_alpha)
 
@@ -59,28 +51,17 @@ def test_forward_probabilities_sum_to_one(initial_probability, transition_matrix
         1.0
     )
 
-def test_forward_output_shape(initial_probability, transition_matrix,log_emission_matrix):
+def test_forward_output_shape(log_alpha):
     """
     Test that the output of the forward filtering algorithm has the correct shape.
     """
-    log_alpha = forward_filtering(
-        initial_probability,
-        transition_matrix,
-        log_emission_matrix
-    )
-
     assert log_alpha.shape == (3, 2)
 
 
 
-def test_forward_values_are_finite(initial_probability, transition_matrix, log_emission_matrix):
+def test_forward_values_are_finite(log_alpha):
     """
     Test that the forward probabilities are finite.
     """
-    log_alpha = forward_filtering(
-        initial_probability,
-        transition_matrix,
-        log_emission_matrix
-    )
 
     assert np.all(np.isfinite(log_alpha))

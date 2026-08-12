@@ -40,7 +40,7 @@ def forward_filtering(initial_probabilities: np.ndarray, transition_matrix: np.n
 
     # Initial step: t = 0
     log_alpha[0] = (log_initial + log_emission_matrix[0])
-    log_likelihood = 0.0
+    log_likelihood = logsumexp(log_alpha[0])
 
     # Normalize
     log_alpha[0] -= logsumexp(log_alpha[0])
