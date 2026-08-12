@@ -4,8 +4,6 @@ from src.markov_model.backward import backward_filtering
 from scipy.special import logsumexp
 from dataclasses import dataclass
 
-
-
 @dataclass
 class BaumWelchOutput:
     """
@@ -22,7 +20,8 @@ def baum_welch_step(
                 initial_probabilities: np.ndarray, 
                 transition_matrix: np.ndarray, 
                 log_emission_matrix: np.ndarray, 
-                feature_matrix: np.ndarray) -> BaumWelchOutput:
+                feature_matrix: np.ndarray,
+                covariance_type = "full") -> BaumWelchOutput:
     """
     Run the baum-welch algorithm in log-space.
 
@@ -38,13 +37,16 @@ def baum_welch_step(
         Log emission densities, shape (T, K).
     
     feature_matrix:
-        Feature observations, shape (T, K)
+        Feature observations, shape (T, D)
 
     Returns
     -------
     BaumWelchOutput
         A dataclass containing the updated parameters and log probabilities.
     """
+
+    if covariance_type.lower() not in {"full", "diag"}:
+        raise ValueError("Covariances type must be either full or diag")
     n_obs, n_states = log_emission_matrix.shape
     log_trans = np.log(transition_matrix)
 
@@ -66,7 +68,7 @@ def baum_welch_step(
     
     #updating initial probabilities for the HMM
     new_initial_prob = gamma[0]
-  
+
     #updating new transition probabilities for HMM
     expected_transitions = np.sum(xi, axis=0)
     expected_occupancy = np.sum(gamma[:-1], axis=0)
@@ -83,19 +85,31 @@ def baum_welch_step(
         new_means[state] = weighted_sum / total_weight
 
 
-    new_covariances = np.empty((n_states, feature_matrix.shape[1], feature_matrix.shape[1]))
+   
     #updating new covariance matrix for the HMM
-    for state in range(n_states):
-        weights = gamma[:, state]
-        residuals = feature_matrix - new_means[state]
+    if covariance_type.lower() == "full":
+        new_covariances = np.empty((n_states, feature_matrix.shape[1], feature_matrix.shape[1]))
 
-        outer_products = (residuals[:, :, None] * residuals[:, None, :])
-        weighted_outer_products = (weights[:, None, None] * outer_products)
-        total_weight = np.sum(weights)
+        for state in range(n_states):
+            weights = gamma[:, state]
+            residuals = feature_matrix - new_means[state]
 
-        new_covariances[state] = (np.sum(weighted_outer_products, axis=0)/ total_weight)
+            outer_products = (residuals[:, :, None] * residuals[:, None, :])
+            weighted_outer_products = (weights[:, None, None] * outer_products)
+            total_weight = np.sum(weights)
 
+            new_covariances[state] = (np.sum(weighted_outer_products, axis=0)/ total_weight)
+    else:
+        new_covariances = np.empty((n_states, feature_matrix.shape[1]))
 
+        for state in range(n_states):
+            weights = gamma[:, state][:, None]
+            residuals = feature_matrix - new_means[state]
+            weighted_squared_residuals = (weights * residuals**2)
+
+            total_weight = np.sum(gamma[:, state])
+
+            new_covariances[state] = (np.sum(weighted_squared_residuals, axis=0)/ total_weight)
     
     return BaumWelchOutput(
         initial_probabilities=new_initial_prob,

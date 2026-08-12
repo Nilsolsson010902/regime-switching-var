@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+from forward import forward_filtering
+from backward import backward_filtering
+from baum_welch import baum_welch_step
 
 class HiddenMarkovModel:
     def __init__(self, feature_matrix: np.ndarray, states: int, covariance_type: str = "full"):
@@ -11,6 +14,7 @@ class HiddenMarkovModel:
         self.init_prob = None
         self.covariances = None
         self.means = None
+        self.log_likelihood_history = None
         self.initialize_parameters()
 
 
@@ -104,5 +108,28 @@ class HiddenMarkovModel:
 
             probability_matrix.append(row)
         return np.array(probability_matrix)
+    
             
-    #def fit(self):
+    def fit(self, max_itr = 100, tol = 1e-5):
+        old_ll = (-np.inf)
+        self.log_likelihood_history = []
+
+        for itr in range(max_itr):
+            log_emissions = self.compute_emission_probability_matrix()
+            new_ll = forward_filtering(initial_probabilities=self.init_prob, transition_matrix=self.transition_matrix, log_emission_matrix=log_emissions).log_likelihood
+            self.log_likelihood_history.append(new_ll)
+            #if conversion the break
+            if(np.abs(old_ll - new_ll) < tol):
+                break
+
+            bw_output = baum_welch_step(initial_probabilities=self.init_prob, transition_matrix=self.transition_matrix, log_emission_matrix=log_emissions, feature_matrix=self.feature_matrix, covariance_type=self.covariance_type)
+
+            #update hmm properties
+            self.init_prob = bw_output.initial_probabilities
+            self.transition_matrix = bw_output.transition_matrix
+            self.means = bw_output.means
+            self.covariances = bw_output.covariances
+            old_ll = new_ll
+
+        return self
+

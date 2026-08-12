@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.special import logsumexp
 
-
 def backward_filtering(transition_matrix: np.ndarray, log_emission_matrix: np.ndarray) -> np.ndarray:
     """
     Run the backward algorithm in log-space.
