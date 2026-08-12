@@ -1,6 +1,6 @@
 import numpy as np
-from forward import forward_filtering
-from backward import backward_filtering
+from src.markov_model.forward import forward_filtering
+from src.markov_model.backward import backward_filtering
 from scipy.special import logsumexp
 from dataclasses import dataclass
 
@@ -47,7 +47,6 @@ def baum_welch_step(
     """
     n_obs, n_states = log_emission_matrix.shape
     log_trans = np.log(transition_matrix)
-    log_obs = np.log(feature_matrix)
 
     log_alpha = forward_filtering(initial_probabilities=initial_probabilities, transition_matrix=transition_matrix, log_emission_matrix=log_emission_matrix).log_alpha
     log_beta = backward_filtering(transition_matrix=transition_matrix, log_emission_matrix=log_emission_matrix)
@@ -69,7 +68,10 @@ def baum_welch_step(
     new_initial_prob = gamma[0]
   
     #updating new transition probabilities for HMM
-    new_transition_matrix = (np.sum(xi, axis=0)/  np.sum(gamma[:-1], axis=0))
+    expected_transitions = np.sum(xi, axis=0)
+    expected_occupancy = np.sum(gamma[:-1], axis=0)
+
+    new_transition_matrix = (expected_transitions/  expected_occupancy[:, None])
     
     new_means = np.empty((n_states, feature_matrix.shape[1]))
     #updating new means for the HMM

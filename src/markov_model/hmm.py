@@ -105,4 +105,4 @@ class HiddenMarkovModel:
             probability_matrix.append(row)
         return np.array(probability_matrix)
             
-
+    #def fit(self):

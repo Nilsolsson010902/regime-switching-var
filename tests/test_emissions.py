@@ -71,3 +71,5 @@ def test_mean_has_higher_log_emission_than_far_observation(feature_matrix, covar
     )
 
     assert log_prob_mean > log_prob_far
+
+

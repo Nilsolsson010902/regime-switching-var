@@ -31,7 +31,7 @@ feature_matrix = np.array([
     [-0.030, -0.035, 0.050]
 ])
 
-output = baum_welch(
+output = baum_welch_step(
         initial_probabilities=initial_probabilities,
         transition_matrix=transition_matrix,
         log_emission_matrix=log_emission_matrix,
