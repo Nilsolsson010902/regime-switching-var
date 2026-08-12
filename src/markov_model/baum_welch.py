@@ -18,7 +18,7 @@ class BaumWelchOutput:
     log_gamma: np.ndarray
     log_xi: np.ndarray
 
-def baum_welch(
+def baum_welch_step(
                 initial_probabilities: np.ndarray, 
                 transition_matrix: np.ndarray, 
                 log_emission_matrix: np.ndarray, 
