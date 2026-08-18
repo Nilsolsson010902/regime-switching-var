@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from forward import forward_filtering
-from backward import backward_filtering
-from baum_welch import baum_welch_step
+from .forward import forward_filtering
+from .backward import backward_filtering
+from .baum_welch import baum_welch_step
 from scipy.special import logsumexp
 
 class HiddenMarkovModel:
@@ -53,10 +53,15 @@ class HiddenMarkovModel:
             state_data = self.feature_matrix[labels == i]
 
             covariance = np.cov(state_data, rowvar=False)
+            #regularization
+            covariance += 1e-6 * np.eye(covariance.shape[0])
             covariance_matrices.append(covariance)
 
         if self.covariance_type == "diag":
-            self.covariances= np.array([np.diag(covariance_matrix) for covariance_matrix in covariance_matrices])
+            self.covariances= np.array([
+                np.maximum(np.diag(covariance_matrix), 1e-6)
+                for covariance_matrix in covariance_matrices
+                ])
         else: 
             self.covariances = np.array(covariance_matrices)
 
@@ -100,13 +105,15 @@ class HiddenMarkovModel:
             The emission probability matrix.
         """
         X = np.asarray(X, dtype=float)
-
         if X.ndim != 2:
             raise ValueError("X must be a two-dimensional array.")
 
         if X.shape[1] != self.means.shape[1]:
             raise ValueError( f"Expected {self.means.shape[1]} features, got {X.shape[1]}.")
 
+        if not np.all(np.isfinite(X)):
+            raise ValueError("X contains NaN or infinite values.")
+        
         probability_matrix = []
         for feature in X:
             row = []

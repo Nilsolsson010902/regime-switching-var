@@ -24,7 +24,7 @@ def test_emission_matrix_shape(feature_matrix, covariance_type):
         covariance_type=covariance_type
     )
 
-    emissions = hmm.compute_emission_probability_matrix()
+    emissions = hmm.compute_emission_probability_matrix(feature_matrix)
 
     assert emissions.shape == (len(feature_matrix), 2)
 
@@ -39,7 +39,7 @@ def test_emissions_are_finite(feature_matrix, covariance_type):
         covariance_type=covariance_type
     )
 
-    emissions = hmm.compute_emission_probability_matrix()
+    emissions = hmm.compute_emission_probability_matrix(feature_matrix)
 
     assert np.all(np.isfinite(emissions))
 

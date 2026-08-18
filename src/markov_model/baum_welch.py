@@ -66,14 +66,20 @@ def baum_welch_step(
     gamma = np.exp(log_gamma)
     xi = np.exp(log_xi)
     
-    #updating initial probabilities for the HMM
+    #updating initial probabilities for the HMM with floor
     new_initial_prob = gamma[0]
+    eps_prob = 1e-12
+    new_initial_prob = np.maximum(new_initial_prob, eps_prob)
 
-    #updating new transition probabilities for HMM
+    new_initial_prob /= new_initial_prob.sum()
+
+    #updating new transition probabilities for HMM with floor
     expected_transitions = np.sum(xi, axis=0)
     expected_occupancy = np.sum(gamma[:-1], axis=0)
-
-    new_transition_matrix = (expected_transitions/  expected_occupancy[:, None])
+    
+    new_transition_matrix = (expected_transitions / expected_occupancy[:, None])
+    new_transition_matrix = np.maximum(new_transition_matrix,eps_prob)
+    new_transition_matrix /= (new_transition_matrix.sum(axis=1, keepdims=True))
     
     new_means = np.empty((n_states, feature_matrix.shape[1]))
     #updating new means for the HMM
@@ -84,8 +90,6 @@ def baum_welch_step(
 
         new_means[state] = weighted_sum / total_weight
 
-
-   
     #updating new covariance matrix for the HMM
     if covariance_type.lower() == "full":
         new_covariances = np.empty((n_states, feature_matrix.shape[1], feature_matrix.shape[1]))
@@ -99,17 +103,22 @@ def baum_welch_step(
             total_weight = np.sum(weights)
 
             new_covariances[state] = (np.sum(weighted_outer_products, axis=0)/ total_weight)
+            #regularization
+            new_covariances[state] += (1e-6 * np.eye(feature_matrix.shape[1]))
+
     else:
         new_covariances = np.empty((n_states, feature_matrix.shape[1]))
 
         for state in range(n_states):
             weights = gamma[:, state][:, None]
             residuals = feature_matrix - new_means[state]
-            weighted_squared_residuals = (weights * residuals**2)
 
+            weighted_squared_residuals = (weights * residuals**2)
             total_weight = np.sum(gamma[:, state])
 
             new_covariances[state] = (np.sum(weighted_squared_residuals, axis=0)/ total_weight)
+            #regularization
+            new_covariances[state] = np.maximum(new_covariances[state],1e-6)
     
     return BaumWelchOutput(
         initial_probabilities=new_initial_prob,
