@@ -4,6 +4,7 @@ from sklearn.cluster import KMeans
 from forward import forward_filtering
 from backward import backward_filtering
 from baum_welch import baum_welch_step
+from scipy.special import logsumexp
 
 class HiddenMarkovModel:
     def __init__(self, feature_matrix: np.ndarray, states: int, covariance_type: str = "full"):
@@ -16,6 +17,7 @@ class HiddenMarkovModel:
         self.means = None
         self.log_likelihood_history = None
         self.initialize_parameters()
+        self.is_fitted = False
 
 
     def initialize_parameters(self) -> None:
@@ -88,7 +90,7 @@ class HiddenMarkovModel:
         return -0.5*(dim_const + log_determinant+ mahalanobis)
 
 
-    def compute_emission_probability_matrix(self) -> np.ndarray:
+    def compute_emission_probability_matrix(self, X: np.ndarray) -> np.ndarray:
         """
         Compute the emission probability matrix for all observations and states.
 
@@ -97,8 +99,16 @@ class HiddenMarkovModel:
         np.ndarray
             The emission probability matrix.
         """
+        X = np.asarray(X, dtype=float)
+
+        if X.ndim != 2:
+            raise ValueError("X must be a two-dimensional array.")
+
+        if X.shape[1] != self.means.shape[1]:
+            raise ValueError( f"Expected {self.means.shape[1]} features, got {X.shape[1]}.")
+
         probability_matrix = []
-        for feature in self.feature_matrix:
+        for feature in X:
             row = []
             for state in range(self.states):
                 
@@ -111,14 +121,32 @@ class HiddenMarkovModel:
     
             
     def fit(self, max_itr = 100, tol = 1e-5):
+        """
+        Fit the Hidden Markov Model to the feature matrix using the Baum-Welch algorithm.
+
+        Parameters
+        ----------
+        max_itr : int, optional
+            Maximum number of iterations for the Baum-Welch algorithm. Default is 100.
+        tol : float, optional
+            Tolerance for convergence. Default is 1e-5.
+
+        Returns
+        -------
+        HiddenMarkovModel
+            The fitted Hidden Markov Model instance.
+        """
         old_ll = (-np.inf)
         self.log_likelihood_history = []
 
         for itr in range(max_itr):
-            log_emissions = self.compute_emission_probability_matrix()
-            new_ll = forward_filtering(initial_probabilities=self.init_prob, transition_matrix=self.transition_matrix, log_emission_matrix=log_emissions).log_likelihood
+            log_emissions = self.compute_emission_probability_matrix(X = self.feature_matrix)
+            new_ll = forward_filtering(initial_probabilities=self.init_prob, 
+                                    transition_matrix=self.transition_matrix, 
+                                    log_emission_matrix=log_emissions).log_likelihood
+            
             self.log_likelihood_history.append(new_ll)
-            #if conversion the break
+            #if conversion then break
             if(np.abs(old_ll - new_ll) < tol):
                 break
 
@@ -131,5 +159,38 @@ class HiddenMarkovModel:
             self.covariances = bw_output.covariances
             old_ll = new_ll
 
+        self.is_fitted = True
         return self
 
+    def filter_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute the filtered state probabilities for the given observations.
+        """
+        if not self.is_fitted:
+                    raise ValueError("Modell not fitted yet")
+        
+        log_emissions = self.compute_emission_probability_matrix(X = X)
+        return np.exp(forward_filtering(initial_probabilities=self.init_prob, 
+                                transition_matrix=self.transition_matrix, 
+                                log_emission_matrix=log_emissions).log_alpha)
+
+
+    def smooth_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute the smoothed state probabilities for the given observations.
+        """
+        if not self.is_fitted:
+            raise ValueError("Modell not fitted yet")
+        
+        log_emissions = self.compute_emission_probability_matrix(X = X)
+        log_alpha = forward_filtering(initial_probabilities=self.init_prob, 
+                                        transition_matrix=self.transition_matrix, 
+                                        log_emission_matrix=log_emissions).log_alpha
+
+        log_beta = backward_filtering(transition_matrix=self.transition_matrix,
+                                        log_emission_matrix=log_emissions)
+        log_gamma = log_alpha + log_beta
+        log_gamma -= logsumexp(log_gamma, axis=1, keepdims=True)
+
+        return np.exp(log_gamma)
+        
