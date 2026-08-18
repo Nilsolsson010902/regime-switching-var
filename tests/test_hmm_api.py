@@ -4,17 +4,21 @@ import pytest
 
 @pytest.fixture
 def feature_matrix():
-    return np.array([
-        [0.08, 0.10, 0.12],
-        [0.26, 0.09, 0.13],
-        [0.40, 0.36, 0.50],
-        [0.10, 0.08, 0.11],
+    rng = np.random.default_rng(42)
 
-        [0.38, 0.35, 0.48],
-        [0.40, 0.36, 0.50],
-        [0.42, 0.34, 0.52],
-        [0.39, 0.38, 0.47],
-    ])
+    state_0 = rng.normal(
+        loc=[0.02, 0.05, 0.10],
+        scale=[0.01, 0.02, 0.02],
+        size=(50, 3)
+    )
+
+    state_1 = rng.normal(
+        loc=[-0.03, -0.05, 0.30],
+        scale=[0.02, 0.03, 0.04],
+        size=(50, 3)
+    )
+
+    return np.vstack([state_0, state_1])
 
 @pytest.fixture
 def X():
@@ -42,12 +46,24 @@ def test_filter_probabilities_sum_to_one(model_diag, model_full, X):
 
 def test_filter_probabilities_sum_to_one(model_diag, model_full, X):
     """
-    Test that the smooth probabilities sum to 1 for each time step."""
+    Test that the smooth probabilities sum to 1 for each time step.
+    """
     assert np.allclose(model_full.smooth_proba(X=X).sum(axis=1), 1.0)
     assert np.allclose(model_diag.smooth_proba(X=X).sum(axis=1), 1.0)
 
 def test_probability_output_shapes(model_full, X):
     """
-    Test that the output shapes of filter_proba and smooth_proba are correct."""
+    Test that the output shapes of filter_proba and smooth_proba are correct.
+    """
     assert model_full.filter_proba(X).shape == (len(X), 2)
     assert model_full.smooth_proba(X).shape == (len(X), 2)
+
+def test_predict_output(model_full, X):
+    """
+    Test that output shapes of predict are correct. 
+    """
+    states = model_full.predict(X)
+
+    assert states.shape == (len(X),)
+    assert np.all(states >= 0)
+    assert np.all(states < model_full.states)

@@ -200,4 +200,12 @@ class HiddenMarkovModel:
         log_gamma -= logsumexp(log_gamma, axis=1, keepdims=True)
 
         return np.exp(log_gamma)
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict the most likely hidden state at each observation
+        using smoothed state probabilities.
+        """
+        probs = self.smooth_proba(X=X)
+        return np.argmax(probs, axis=1)
         
