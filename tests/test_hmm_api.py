@@ -69,7 +69,7 @@ def test_predict_output(model_full, X):
     assert np.all(states < model_full.states)
 
 
-def test_decode_viterbi_output(X):
+def test_decode_viterbi_output(model_full, X):
     """
     Test that output shapes of viterbi path are correct. 
     """

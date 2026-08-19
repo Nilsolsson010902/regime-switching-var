@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from garch import GarchOutput
+from .garch import GarchOutput
 
 
 def compute_log_returns(prices: pd.Series) -> pd.Series:
