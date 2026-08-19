@@ -4,6 +4,7 @@ from sklearn.cluster import KMeans
 from .forward import forward_filtering
 from .backward import backward_filtering
 from .baum_welch import baum_welch_step
+from .viterbi import viterbi
 from scipy.special import logsumexp
 
 class HiddenMarkovModel:
@@ -200,6 +201,7 @@ class HiddenMarkovModel:
         log_gamma -= logsumexp(log_gamma, axis=1, keepdims=True)
 
         return np.exp(log_gamma)
+    
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -208,4 +210,14 @@ class HiddenMarkovModel:
         """
         probs = self.smooth_proba(X=X)
         return np.argmax(probs, axis=1)
-        
+    
+
+    def decode_viterbi(self, X: np.ndarray):
+        """
+        Decode the most likely hidden-state sequence using the Viterbi algorithm.
+        """
+        if not self.is_fitted:
+                    raise ValueError("Modell not fitted yet")
+
+        log_emission = self.compute_emission_probability_matrix(X=X)
+        return viterbi(init_prob=self.init_prob, transition_matrix=self.transition_matrix, log_emission_matrix=log_emission)

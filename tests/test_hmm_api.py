@@ -67,3 +67,14 @@ def test_predict_output(model_full, X):
     assert states.shape == (len(X),)
     assert np.all(states >= 0)
     assert np.all(states < model_full.states)
+
+
+def test_decode_viterbi_output(X):
+    """
+    Test that output shapes of viterbi path are correct. 
+    """
+    states = model_full.decode_viterbi(X)
+    
+    assert states.shape == (len(X),)
+    assert np.all(states >= 0)
+    assert np.all(states < model_full.states)
