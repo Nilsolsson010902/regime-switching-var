@@ -76,7 +76,7 @@ def baum_welch_step(
     #updating new transition probabilities for HMM with floor
     expected_transitions = np.sum(xi, axis=0)
     expected_occupancy = np.sum(gamma[:-1], axis=0)
-    
+
     new_transition_matrix = (expected_transitions / expected_occupancy[:, None])
     new_transition_matrix = np.maximum(new_transition_matrix,eps_prob)
     new_transition_matrix /= (new_transition_matrix.sum(axis=1, keepdims=True))
@@ -104,7 +104,7 @@ def baum_welch_step(
 
             new_covariances[state] = (np.sum(weighted_outer_products, axis=0)/ total_weight)
             #regularization
-            new_covariances[state] += (1e-6 * np.eye(feature_matrix.shape[1]))
+            new_covariances[state] += (1e-10 * np.eye(feature_matrix.shape[1]))
 
     else:
         new_covariances = np.empty((n_states, feature_matrix.shape[1]))
@@ -118,7 +118,7 @@ def baum_welch_step(
 
             new_covariances[state] = (np.sum(weighted_squared_residuals, axis=0)/ total_weight)
             #regularization
-            new_covariances[state] = np.maximum(new_covariances[state],1e-6)
+            new_covariances[state] = np.maximum(new_covariances[state],1e-10)
     
     return BaumWelchOutput(
         initial_probabilities=new_initial_prob,

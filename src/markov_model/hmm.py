@@ -55,12 +55,12 @@ class HiddenMarkovModel:
 
             covariance = np.cov(state_data, rowvar=False)
             #regularization
-            covariance += 1e-6 * np.eye(covariance.shape[0])
+            covariance += 1e-10 * np.eye(covariance.shape[0])
             covariance_matrices.append(covariance)
 
         if self.covariance_type == "diag":
             self.covariances= np.array([
-                np.maximum(np.diag(covariance_matrix), 1e-6)
+                np.maximum(np.diag(covariance_matrix), 1e-10)
                 for covariance_matrix in covariance_matrices
                 ])
         else: 

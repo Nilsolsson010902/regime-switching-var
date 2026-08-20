@@ -87,3 +87,23 @@ def test_baum_welch_outputs_are_finite():
 
     for array in arrays:
         assert np.all(np.isfinite(array))
+
+
+def test_xi_gamma_consistency():
+    """
+    Test that the xi and gamma outputs of the Baum-Welch algorithm are consistent.
+    """
+    gamma = np.exp(output.log_gamma)
+    xi = np.exp(output.log_xi)
+
+    assert np.allclose(
+        xi.sum(axis=2),
+        gamma[:-1],
+        atol=1e-8
+    )
+
+    assert np.allclose(
+        xi.sum(axis=1),
+        gamma[1:],
+        atol=1e-8
+    )
