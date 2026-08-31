@@ -91,8 +91,20 @@ def validate_feature_input(feature_series: pd.Series) -> None:
     if feature_series.index.has_duplicates:
         raise ValueError("Input Series index contains duplicate values.")
 
+def compute_drawdown(prices: pd.Series) -> pd.Series:
+    """
+    Compute drawdown from the running maximum price.
+    """
+    validate_feature_input(prices)
 
-def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput, window: int = 20) -> pd.DataFrame:
+    running_max = prices.cummax()
+    drawdown = prices / running_max - 1
+    drawdown.name = "Drawdown"
+
+    return drawdown
+
+
+def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput) -> pd.DataFrame:
     """
     Build a modelling-ready feature DataFrame for HMM analysis.
 
@@ -110,7 +122,10 @@ def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput, window: int = 2
     prices = ticker["Close"].astype(float)
 
     log_returns = compute_log_returns(prices)
-    momentum = compute_momentum(prices, window=window)
+    momentum_20 = compute_momentum(prices, window=20)
+    momentum_60 = compute_momentum(prices, window=60)
+    drawdown = compute_drawdown(prices)
+
 
     # GARCH was fitted using returns in percentage units.
     # Divide by 100 to align volatility with decimal-form returns.
@@ -119,7 +134,9 @@ def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput, window: int = 2
     hmm_features = pd.concat(
         [
             log_returns,
-            momentum,
+            momentum_20,
+            momentum_60,
+            drawdown,
             conditional_volatility
         ],
         axis=1
