@@ -72,6 +72,19 @@ def compute_rolling_volatility(returns: pd.Series, window: int = 20) -> pd.Serie
     return rolling_volatility
 
 
+def compute_drawdown(prices: pd.Series) -> pd.Series:
+    """
+    Compute drawdown from the running maximum price.
+    """
+    validate_feature_input(prices)
+
+    running_max = prices.cummax()
+    drawdown = prices / running_max - 1
+    drawdown.name = "Drawdown"
+
+    return drawdown
+
+
 def validate_feature_input(feature_series: pd.Series) -> None:
     """
     Validate a pandas Series used for feature construction.
@@ -91,22 +104,33 @@ def validate_feature_input(feature_series: pd.Series) -> None:
     if feature_series.index.has_duplicates:
         raise ValueError("Input Series index contains duplicate values.")
 
-def compute_drawdown(prices: pd.Series) -> pd.Series:
+
+def compute_downside_volatility(prices: pd.Series, window: int) -> pd.Series:
     """
-    Compute drawdown from the running maximum price.
+    Compute the rolling downside volatility of a price series.
+
+    Parameters
+    ----------
+    prices:
+        A pandas Series of prices.
+    window:
+        The number of periods used in the rolling calculation.
+    Returns
+    -------
+    pd.Series
+        Rolling downside volatility over the specified window.
     """
+
     validate_feature_input(prices)
+    log_returns = compute_log_returns(prices)
+    negative_returns = log_returns.apply(lambda x: 0 if x>0 else x)
+    downside_vol = compute_rolling_volatility(returns= negative_returns, window=window)
+    downside_vol.name = f"Downside_Volatility_{window}"
+    return downside_vol
 
-    running_max = prices.cummax()
-    drawdown = prices / running_max - 1
-    drawdown.name = "Drawdown"
-
-    return drawdown
-
-
-def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput) -> pd.DataFrame:
+def build_baseline_features(ticker: pd.DataFrame, garch: GarchOutput) -> pd.DataFrame:
     """
-    Build a modelling-ready feature DataFrame for HMM analysis.
+    Build a modelling-ready baseline feature DataFrame for HMM analysis.
 
     The initial feature set contains:
     - daily log returns,
@@ -123,9 +147,7 @@ def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput) -> pd.DataFrame
 
     log_returns = compute_log_returns(prices)
     momentum_20 = compute_momentum(prices, window=20)
-    momentum_60 = compute_momentum(prices, window=60)
-    drawdown = compute_drawdown(prices)
-
+ 
 
     # GARCH was fitted using returns in percentage units.
     # Divide by 100 to align volatility with decimal-form returns.
@@ -135,12 +157,49 @@ def build_hmm_features(ticker: pd.DataFrame, garch: GarchOutput) -> pd.DataFrame
         [
             log_returns,
             momentum_20,
-            momentum_60,
-            drawdown,
             conditional_volatility
         ],
         axis=1
     )
 
+    hmm_features = (hmm_features.replace([np.inf, -np.inf], np.nan).dropna().sort_index())
+    return hmm_features
+
+def build_alternative_features(ticker: pd.DataFrame, vix: pd.DataFrame) -> pd.DataFrame:
+    """
+        Build a modelling-ready alternative feature DataFrame for HMM analysis.
+    
+        The feature set contains:
+        - log momentum 60 days,
+        - drawdown,
+        - downside volatility
+        - rolling volatility 20 days
+        - VIX closing value
+    """
+    if not isinstance(ticker, pd.DataFrame):
+            raise TypeError("Ticker data must be a pandas DataFrame.")
+    
+    if "Close" not in ticker.columns:
+            raise ValueError("Ticker DataFrame must contain a 'Close' column.")
+    
+    prices = ticker["Close"].astype(float)
+    vix_close = vix['Close']
+    vix_close.name = "VIX"
+    momentum_60 = compute_momentum(prices, window=60)
+    drawdown = compute_drawdown(prices)
+    downside_vol = compute_downside_volatility(prices, window = 20)
+    rolling_vol_20 = compute_rolling_volatility(prices)
+
+    hmm_features = pd.concat(
+            [
+                momentum_60,
+                drawdown,
+                downside_vol,
+                rolling_vol_20,
+                vix_close
+            ],
+            axis=1
+        )
+    
     hmm_features = (hmm_features.replace([np.inf, -np.inf], np.nan).dropna().sort_index())
     return hmm_features
