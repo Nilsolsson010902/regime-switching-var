@@ -62,9 +62,11 @@ def compute_rolling_volatility(returns: pd.Series, window: int = 20) -> pd.Serie
         Rolling volatility over the specified window.
     """
     validate_feature_input(returns)
+    
 
     if window <= 0:
         raise ValueError("Window must be a positive integer.")
+    
 
     rolling_volatility = returns.rolling(window=window).std()
     rolling_volatility.name = f"Rolling_Volatility_{window}"
@@ -147,7 +149,6 @@ def build_baseline_features(ticker: pd.DataFrame, garch: GarchOutput) -> pd.Data
 
     log_returns = compute_log_returns(prices)
     momentum_20 = compute_momentum(prices, window=20)
- 
 
     # GARCH was fitted using returns in percentage units.
     # Divide by 100 to align volatility with decimal-form returns.
@@ -188,7 +189,8 @@ def build_alternative_features(ticker: pd.DataFrame, vix: pd.DataFrame) -> pd.Da
     momentum_60 = compute_momentum(prices, window=60)
     drawdown = compute_drawdown(prices)
     downside_vol = compute_downside_volatility(prices, window = 20)
-    rolling_vol_20 = compute_rolling_volatility(prices)
+    log_returns = compute_log_returns(prices)
+    rolling_vol_20 = compute_rolling_volatility(log_returns)
 
     hmm_features = pd.concat(
             [
