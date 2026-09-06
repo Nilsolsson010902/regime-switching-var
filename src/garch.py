@@ -10,9 +10,7 @@ class GarchOutput:
     conditional_volatility: pd.Series
 
 
-def fit_garch(returns: pd.Series,
-    distribution: str = "t"
-) -> GarchOutput:
+def fit_garch(returns: pd.Series, distribution: str = "t") -> GarchOutput:
     """
     Fit a GARCH(1,1) model to a return series.
 
@@ -40,3 +38,28 @@ def fit_garch(returns: pd.Series,
     volatility = pd.Series(result.conditional_volatility, index=clean_returns.index, name="Conditional Volatility")
 
     return GarchOutput(result=result, conditional_volatility=volatility)
+
+
+def forecast_variance_one_step(omega: float, alpha: float, beta: float, residual_t: float,variance_t: float) -> float:
+    """
+    Forecast the next period's variance using the GARCH(1,1) model.
+
+    Parameters
+    ----------
+    omega:
+        Constant term in the GARCH model.
+    alpha:
+        Coefficient for the lagged squared residual (ARCH term).
+    beta:
+        Coefficient for the lagged variance (GARCH term).
+    residual_t:
+        The residual (return - mean) at time t.
+    variance_t:
+        The variance at time t.
+
+    Returns
+    -------
+    float
+        Forecasted variance for time t+1.
+    """
+    return (omega+ alpha * residual_t**2 + beta * variance_t)
