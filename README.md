@@ -185,7 +185,7 @@ Explores market returns, volatility, distributions, and the features later used 
 
 Develops and evaluates the GARCH(1,1) volatility model, including Student-t innovations and residual diagnostics.
 
-### 03 — Hidden Markov Models
+### 03 — HMM Analysis
 
 Implements and evaluates a custom Gaussian HMM and uses it to identify calm, intermediate, and stressed market regimes.
 
