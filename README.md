@@ -141,7 +141,7 @@ The HMM successfully identifies economically distinct market regimes, but the re
 
 The estimated regimes are highly persistent, causing predicted next-day regime risk to remain close to current regime risk. As a result, the regime adjustment factor remains close to one and only makes small changes to the baseline GARCH forecasts.
 
-This result highlights that identifying meaningful market regimes and does not necessarily lead to improvements when predicting value for risk forecasting.
+This result highlights that identifying meaningful market regimes does not necessarily lead to improved risk forecasts.
 
 ## Project Structure
 
@@ -152,7 +152,7 @@ regime-switching-var/
 │   ├── 01_Exploratory_Data_Analysis.ipynb
 │   ├── 02_GARCH_Volatility_Modelling.ipynb
 │   ├── 03_Hidden_Markov_Models.ipynb
-│   ├── 04_Regime_Switching_GARCH.ipynb
+│   ├── 04_Regime_Aware_GARCH.ipynb
 │   └── 05_Value_At_Risk_Backtest.ipynb
 │
 ├── src/
