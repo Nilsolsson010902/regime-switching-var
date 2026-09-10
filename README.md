@@ -106,7 +106,7 @@ Both volatility forecasts are converted into 99% one-day Value-at-Risk forecasts
 
 Since the GARCH model uses Student-t distribution VaR is calculated using the standardized Student-t distribution:
 
-$$VaR_{t+1|t}^{99\%} =\mu_t + \sigma_{t+1|t} q_{0.01,\nu_t}$$
+$$VaR_{t+1|t}^{99\%} = \mu_t + \sigma_{t+1|t} q_{0.01,v_t}$$
 
 where $q_{0.01,v_t}$ is the lower 1% quantile of the standardized Student-t distribution.
 
