@@ -76,7 +76,13 @@ These probabilities are converted into an expected regime volatility.
 The baseline GARCH forecast is then adjusted according to the expected change in regime risk:
 
 
-$\sigma^{RA}_{t+1|t} = \sigma^{GARCH}_{t+1|t} \frac{\sigma^{HMM}_{t+1|t}} {\sigma^{HMM}_{t|t}}$
+$$
+\sigma^{RA}_{t+1|t}
+=
+\sigma^{GARCH}_{t+1|t}
+\frac{\sigma^{HMM}_{t+1|t}}
+{\sigma^{HMM}_{t|t}}
+$$
 
 This allows the HMM to increase or decrease the GARCH forecast when the market is expected to move toward a higher- or lower-volatility regime.
 
